@@ -12,13 +12,13 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 # ---------------- ADD LIBRARIES ---------------- #
 include(FindPkgConfig)
 pkg_check_modules(SDL REQUIRED sdl2>=2.0.1)
-#pkg_check_modules(SDL_image REQUIRED SDL_image)
-#pkg_check_modules(SDL_ttf REQUIRED SDL_ttf)
+pkg_check_modules(SDL_IMAGE REQUIRED SDL_image)
+pkg_check_modules(SDL_TTF REQUIRED SDL_ttf)
 
 include_directories( ${PROJECT_NAME}
   ${SDL_INCLUDE_DIRS}
-#  ${SDL_IMAGE_INCLUDE_DIRS}
-#  ${SDL_TTF_INCLUDE_DIRS}
+  ${SDL_IMAGE_INCLUDE_DIRS}
+  ${SDL_TTF_INCLUDE_DIRS}
   )
 link_directories(${CMAKE_SOURCE_DIR}/libs/template_application)
 include_directories("${PROJECT_SOURCE_DIR}/libs/template_application/include")
@@ -28,6 +28,6 @@ set(SDL_APP_LIBRARIES ${CMAKE_SOURCE_DIR}/build/libtemplate_sdl_application.a)
 target_link_libraries(${PROJECT_NAME} 
   ${SDL_LIBRARIES}
   ${SDL_APP_LIBRARIES}
-#  ${SDL_IMAGE_LIBRARIES}
-#  ${SDL_TTF_LIBRARIES}
+  ${SDL_IMAGE_LIBRARIES}
+  ${SDL_TTF_LIBRARIES}
   )
