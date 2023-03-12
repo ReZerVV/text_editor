@@ -15,8 +15,18 @@ private:
    */
   int font_width;
   int font_height;
+  int font_cols;
+  int font_rows;
+  int character_width;
+  int character_height;
   unsigned int scale;
   SDL_Texture* font_texturesheet;
+  /*
+   * BUFFER
+   */
+  size_t capacity;
+  size_t size;
+  char* buffer;
 
 public:
   Document(SDL_Renderer*);
@@ -27,6 +37,8 @@ private:
   void UPDATE(const float delta_time) override;
 private:
   SDL_Surface* surface_font_from_image(const char*);
+  void render_buffer(SDL_Renderer*, int, int, Uint32);
+  void render_char(SDL_Renderer*, char, int, int, Uint32);
 };
 
 class Cursor : public Component

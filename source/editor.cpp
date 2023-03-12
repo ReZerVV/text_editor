@@ -1,12 +1,15 @@
 #include "editor.h"
-
+#include <cmath>
 #include "log.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 
 Document::Document(SDL_Renderer* renderer) : Component(),
-  scale(5)
+  font_cols(18), font_rows(7),
+  scale(1),
+  capacity(1024), size(0),
+  buffer(new char[capacity])
 {
   //SDL_Surface* font_surface = surface_font_from_image("../asset/charmap.png");
   //font_texturesheet = SDL_CreateTextureFromSurface(renderer, font_surface);
@@ -16,30 +19,40 @@ Document::Document(SDL_Renderer* renderer) : Component(),
   {
     font_width = font_surface->w;
     font_height = font_surface->h;
+    character_width = font_width / font_cols;
+    character_height = font_height / font_rows;
     font_texturesheet = SDL_CreateTextureFromSurface(renderer, font_surface);
     SDL_FreeSurface(font_surface);
   }
   else 
   {
     LOG("load bitmap.");
+    exit(1);
   }
 }
 Document::~Document() 
 {
+  delete buffer;
   SDL_DestroyTexture(font_texturesheet);
 }
 
 void Document::RENDER(SDL_Renderer* renderer)
 {
-  const SDL_Rect dest = {
-    .x = 10,
-    .y = 10,
-    .w = font_width * scale,
-    .h = font_height * scale
-  };
-  SDL_RenderCopy(renderer, font_texturesheet, NULL, &dest);
+  render_buffer(renderer, 10,10, 0xFFFFFFFF);
 }
-void Document::UPDATE(SDL_Event* event) {}
+void Document::UPDATE(SDL_Event* event)
+{
+  switch (event->type) {
+  case SDL_TEXTINPUT:
+    if ((size + 1) < capacity) 
+    {
+      buffer[size] = *event->text.text;
+      ++size;
+    }
+    break;
+  }
+}
+
 void Document::UPDATE(const float delta_time) {}
 
 SDL_Surface* Document::surface_font_from_image(const char* file_path)
@@ -73,6 +86,41 @@ SDL_Surface* Document::surface_font_from_image(const char* file_path)
   )); 
 }
 
+void Document::render_buffer(SDL_Renderer* renderer, int x, int y, Uint32 color)
+{
+  for (size_t index = 0; index < size; ++index) {
+    render_char(renderer, buffer[index], x, y, color);
+    x += character_width * scale;
+  }
+}
+
+void Document::render_char(SDL_Renderer* renderer, char character, int x, int y, Uint32 color)
+{
+  const size_t index = static_cast<int>(character) - 32;
+  const size_t texture_x = index % font_cols;
+  const size_t texture_y = index / font_cols;
+  
+  const SDL_Rect src = {
+    .x = texture_x * character_width,
+    .y = texture_y * character_height,
+    .w = character_width,
+    .h = character_height
+  };
+  const SDL_Rect dest = {
+    .x = x,
+    .y = y,
+    .w = static_cast<int>(character_width * scale),
+    .h = static_cast<int>(character_height * scale)
+  };
+
+  SDL_SetTextureColorMod(font_texturesheet, 
+    (color >> (8 * 2)) & 0xFF,
+    (color >> (8 * 1)) & 0xFF,
+    (color >> (8 * 0)) & 0xFF
+  );
+  SDL_RenderCopy(renderer, font_texturesheet, &src, &dest);
+}
+
 
 Cursor::Cursor() : Component() 
 {
@@ -83,8 +131,8 @@ Cursor::~Cursor() {}
 
 void Cursor::RENDER(SDL_Renderer* renderer) 
 {
-  body.w = 10;
-  body.h = 20;
+  body.w = 7;
+  body.h = 9;
   
   SDL_SetRenderDrawColor(renderer, 0xFF,0xFF,0xFF,0x00);
   SDL_RenderDrawRect(renderer, &body);
