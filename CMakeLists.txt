@@ -12,8 +12,8 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 # ---------------- ADD LIBRARIES ---------------- #
 include(FindPkgConfig)
 pkg_check_modules(SDL REQUIRED sdl2>=2.0.1)
-pkg_check_modules(SDL_IMAGE REQUIRED SDL_image)
-pkg_check_modules(SDL_TTF REQUIRED SDL_ttf)
+pkg_check_modules(SDL_IMAGE REQUIRED SDL2_image>=2.0.0)
+pkg_check_modules(SDL_TTF REQUIRED SDL2_ttf>=2.0.0)
 
 include_directories( ${PROJECT_NAME}
   ${SDL_INCLUDE_DIRS}
