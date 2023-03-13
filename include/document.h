@@ -18,8 +18,8 @@ public:
 
 public:
 
-  void insert(const char*, const size_t, const size_t);
-  void input(const char*, const size_t);
+  void insert(const char *, const size_t, const size_t);
+  void input(const char *, const size_t);
 
 private:
 
@@ -29,7 +29,7 @@ private:
 
   size_t capacity;
   size_t size;
-  char* buffer;
+  char *buffer;
 
 };
 
@@ -37,16 +37,23 @@ class Document : public Component
 {
 public:
 
-  Document(SDL_Renderer*);
+  Document(SDL_Renderer *);
+  Document(Document &&) = default;
+  Document(const Document &) = default;
+  Document &operator=(Document &&) = default;
+  Document &operator=(const Document &) = default;
   ~Document();
 
 private:
 
-  void RENDER(SDL_Renderer* renderer) override;
-  void UPDATE(SDL_Event* event) override;
+  void RENDER(SDL_Renderer *renderer) override;
+  void UPDATE(SDL_Event *event) override;
   void UPDATE(const float delta_time) override;
 
 private:
+  
+  void memory_reallocation();
+  void memory_delete();
 
   //void render_buffer(SDL_Renderer*, int, int, Uint32);
   //void render_char(SDL_Renderer*, char, int, int, Uint32);
@@ -55,10 +62,12 @@ private:
 private:
 
   // Font
-  Font* font;
+  Font *font;
 
   // Data
-  Line* data;
+  size_t capacity;
+  size_t size;
+  Line **data;
 
 };
 

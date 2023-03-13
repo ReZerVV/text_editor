@@ -29,9 +29,14 @@ void Line::memory_reallocation()
     size
       );
   delete this->buffer;
+
+// ----- DEBUG ----- //
+  printf("[DEBUG]: Document::memory_reallocation() | size[%d] capacity[%d].\n", this->size, this->capacity);
+// ----- DEBUG ----- //
+
 }
 
-void Line::insert(const char* buffer, const size_t length, const size_t index)
+void Line::insert(const char *buffer, const size_t length, const size_t index)
 {
   if (size + length < capacity) {
     memmove(
@@ -49,13 +54,17 @@ void Line::insert(const char* buffer, const size_t length, const size_t index)
     memory_reallocation();
     insert(buffer, length, index);
   }
+
+  // ----- DEBUG ----- //
   for (size_t index = 0; index < size; ++index) {
     std::cout << this->buffer[index];
   }
   std::cout << " size = " << this->size << std::endl;
+// ----- DEBUG ----- //
+
 }
 
-void Line::input(const char* buffer, const size_t length)
+void Line::input(const char *buffer, const size_t length)
 {
   if (size + length < capacity) {
     memcpy(
@@ -68,27 +77,65 @@ void Line::input(const char* buffer, const size_t length)
     memory_reallocation();
     input(buffer, length);
   }
+
+// ----- DEBUG ----- //
   for (size_t index = 0; index < size; ++index) {
     std::cout << this->buffer[index];
   }
   std::cout << " size = " << this->size << std::endl;
+// ----- DEBUG ----- //
+
 }
 
 // ========================= DOCUMENT ========================= //
 
-Document::Document(SDL_Renderer* renderer) : Component(),
+#define CAPACITY 1
+
+Document::Document(SDL_Renderer *renderer) : Component(),
+// ----- font ----- //
   font(new Font {renderer}),
-  data(new Line {})
+// ----- data ----- //
+  capacity(CAPACITY),
+  size(0),
+  data(new Line*[capacity])
 {
   this->font->load_from_file("../asset/charmap.png");
   this->font->scale = 3;
+  
+  memory_reallocation();
 }
 Document::~Document() 
 {
   delete font;
-
-  delete data;
+  
+  memory_delete();
 }
+
+void Document::memory_reallocation()
+{
+  this->capacity *= 2;
+  Line **new_data = new Line*[capacity];
+  memcpy(
+    new_data,
+    this->data,
+    size
+      );
+  memory_delete();
+
+// ----- DEBUG ----- //
+  printf("[DEBUG]: Document::memory_reallocation() | size[%d] capacity[%d].\n", this->size, this->capacity);
+// ----- DEBUG ----- //
+
+}
+
+void Document::memory_delete()
+{
+  for (size_t index = 0; index < size; ++index) {
+    delete this->data[index];
+  }
+}
+
+
 
 void Document::RENDER(SDL_Renderer* renderer)
 {
@@ -138,7 +185,7 @@ void Document::UPDATE(SDL_Event* event)
   switch (event->type) {
   
   case SDL_TEXTINPUT:
-    this->data->input(event->text.text, 1);
+    this->data[0]->input(event->text.text, 1);
   break;
 
   case SDL_KEYDOWN:
