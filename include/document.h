@@ -2,8 +2,10 @@
 #define DOCUMENT
 
 #include "component.h"
-#include "SDL_image.h"
+#include <SDL_image.h>
 #include "font.h"
+
+// ========================= LINE ========================= //
 
 class Line
 {
@@ -18,20 +20,56 @@ public:
 
 public:
 
+  size_t size() const;
+  size_t capacity() const;
+
   void insert(const char *, const size_t, const size_t);
   void input(const char *, const size_t);
 
 private:
 
+// ----- MEMORY ----- //
   void memory_reallocation();
+// ----- DEBUG ----- //
+  void debug();
 
 private:
 
-  size_t capacity;
-  size_t size;
-  char *buffer;
+  size_t _capacity;
+  size_t _size;
+  char *_buffer;
 
 };
+
+// ========================= CURSOR ========================= //
+
+class Cursor
+{
+public:
+  
+  Cursor();
+  Cursor(Cursor &&) = default;
+  Cursor(const Cursor &) = default;
+  Cursor &operator=(Cursor &&) = default;
+  Cursor &operator=(const Cursor &) = default;
+  ~Cursor();
+
+public:
+
+  size_t index() const;
+  size_t line() const;
+
+  SDL_Rect *body();
+
+private:
+
+  SDL_Rect _body;
+  size_t _index;
+  size_t _line;
+
+};
+
+// ========================= DOCUMENT ========================= //
 
 class Document : public Component
 {
@@ -51,20 +89,22 @@ private:
   void UPDATE(const float delta_time) override;
 
 private:
-  
+
+// ----- MEMORY ----- //
   void memory_reallocation();
   void memory_delete();
-
-  //void render_buffer(SDL_Renderer*, int, int, Uint32);
-  //void render_char(SDL_Renderer*, char, int, int, Uint32);
-  //void render_cursor(SDL_Renderer*, int, int, Uint32);
+// ----- EVENT ----- //
+  void data_input(const char *, const size_t);
 
 private:
 
-  // Font
+// ----- FONT ----- //
   Font *font;
 
-  // Data
+// ----- CURSOR ----- //
+  Cursor* cursor;
+
+// ----- DATA ----- //
   size_t capacity;
   size_t size;
   Line **data;

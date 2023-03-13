@@ -5,86 +5,128 @@
 // ========================= LINE ========================= //
 
 #define KB 1024
+
 Line::Line()
   :
-  capacity(KB), // 1KB - capacity
-  size(0),
-  buffer(new char[capacity])
+  _capacity(KB), // 1KB - capacity buffer.
+  _size(0),
+  _buffer(new char[_capacity])
 {
-  memory_reallocation();
 }
 
 Line::~Line()
 {
-  delete this->buffer;
+  delete this->_buffer;
 }
 
 void Line::memory_reallocation()
 {
-  this->capacity *= 2;
-  char* new_buffer = new char[capacity];
+  this->_capacity *= 2;
+  char* new_buffer = new char[_capacity];
   memcpy(
     new_buffer,
-    this->buffer,
-    size
+    this->_buffer,
+    this->_size
       );
-  delete this->buffer;
+  delete this->_buffer;
 
 // ----- DEBUG ----- //
-  printf("[DEBUG]: Document::memory_reallocation() | size[%d] capacity[%d].\n", this->size, this->capacity);
+  printf("[DEBUG]: Line::memory_reallocation() | size[%d] capacity[%d].\n", this->_size, this->_capacity);
 // ----- DEBUG ----- //
 
 }
 
+void Line::debug()
+{
+  printf("[DUBUG]:\n");
+  std::cout << "BUFFER --> [";
+  for (size_t index = 0; index < _size; ++index) {
+    std::cout << this->_buffer[index];
+  }
+  std::cout << ']' << std::endl;
+  printf("SIZE --> [%d] | CAPACITY --> [%d].\n", this->_size, this->_capacity);
+}
+
+
+size_t Line::size() const
+{
+  return this->_size;
+}
+
+size_t Line::capacity() const
+{
+  return this->_capacity;
+}
+
 void Line::insert(const char *buffer, const size_t length, const size_t index)
 {
-  if (size + length < capacity) {
+  if (_size + length < _capacity) {
     memmove(
-      &this->buffer[index + length],
-      &this->buffer[index],
-      size - index
+      &this->_buffer[index + length],
+      &this->_buffer[index],
+      this->_size - index
         );
     memcpy(
-      &this->buffer[index],
+      &this->_buffer[index],
       buffer,
       length
         );
-    this->size += length;
+    this->_size += length;
   } else {
     memory_reallocation();
     insert(buffer, length, index);
   }
 
-  // ----- DEBUG ----- //
-  for (size_t index = 0; index < size; ++index) {
-    std::cout << this->buffer[index];
-  }
-  std::cout << " size = " << this->size << std::endl;
 // ----- DEBUG ----- //
-
+  debug();
+// ----- DEBUG ----- //
 }
 
 void Line::input(const char *buffer, const size_t length)
 {
-  if (size + length < capacity) {
+  if (_size + length < _capacity) {
     memcpy(
-      &this->buffer[size],
+      &this->_buffer[_size],
       buffer,
       length
           );
-    this->size += length;
+    this->_size += length;
   } else {
     memory_reallocation();
     input(buffer, length);
   }
 
 // ----- DEBUG ----- //
-  for (size_t index = 0; index < size; ++index) {
-    std::cout << this->buffer[index];
-  }
-  std::cout << " size = " << this->size << std::endl;
+  debug();
 // ----- DEBUG ----- //
+}
 
+// ========================= CURSOR ========================= //
+
+Cursor::Cursor()
+  :
+  _index(0),
+  _line(0)
+{
+}
+
+Cursor::~Cursor()
+{
+}
+
+size_t Cursor::index() const
+{
+  return this->_index;
+}
+
+size_t Cursor::line() const
+{
+  return this->_line;
+}
+
+SDL_Rect *Cursor::body()
+{
+  return &this->_body;
 }
 
 // ========================= DOCUMENT ========================= //
@@ -92,22 +134,30 @@ void Line::input(const char *buffer, const size_t length)
 #define CAPACITY 1
 
 Document::Document(SDL_Renderer *renderer) : Component(),
-// ----- font ----- //
+// ----- FONT ----- //
   font(new Font {renderer}),
-// ----- data ----- //
+// ----- CURSOR ----- //
+  cursor(new Cursor {}),
+// ----- DATA ----- //
   capacity(CAPACITY),
   size(0),
   data(new Line*[capacity])
 {
+// ----- FONT ----- //
   this->font->load_from_file("../asset/charmap.png");
   this->font->scale = 3;
   
-  memory_reallocation();
+// ----- CURSOR -----//
+// ...
+
+// ----- DATA -----//
+// ...
 }
-Document::~Document() 
+
+Document::~Document()
 {
-  delete font;
-  
+  delete this->font;
+  delete this->cursor;
   memory_delete();
 }
 
@@ -135,57 +185,14 @@ void Document::memory_delete()
   }
 }
 
+void Document::RENDER(SDL_Renderer* renderer) {}
 
-
-void Document::RENDER(SDL_Renderer* renderer)
-{
-  //render_cursor(renderer, 0,0, 0xFFFFFFFF);
-  //render_buffer(renderer, 0,0, 0xFFFFFFFF);
-}
-/*
-void Document::render_buffer(SDL_Renderer* renderer, int x, int y, Uint32 color) {}
-
-void Document::render_char(SDL_Renderer* renderer, char character, int x, int y, Uint32 color)
-{
-  SDL_Rect dst = {
-    .x = x,
-    .y = y,
-    .w = font->width * font->scale,
-    .h = font->height * font->scale
-  };
-  
-  SDL_SetTextureColorMod(font->font_sheet,
-    (color >> (8 * 2)) & 0xFF,
-    (color >> (8 * 1)) & 0xFF,
-    (color >> (8 * 0)) & 0xFF
-  );
-  SDL_SetTextureAlphaMod(font->font_sheet,(color >> (8 * 3)) & 0xFF);
-  SDL_RenderCopy(renderer, font->font_sheet, font->get(character), &dst);
-}
-
-void Document::render_cursor(SDL_Renderer* renderer, int x, int y, Uint32 color)
-{
-  this->cursor.body.x = cursor.index * font->width * font->scale;
-  this->cursor.body.y = cursor.line * font->height * font->scale;
-  this->cursor.body.w = font->width * font->scale;
-  this->cursor.body.h = font->height * font->scale;
-
-  SDL_SetRenderDrawColor(renderer,
-    (color >> (8 * 2)) & 0xFF,
-    (color >> (8 * 1)) & 0xFF,
-    (color >> (8 * 0)) & 0xFF,
-    0x00
-  );
-  SDL_RenderFillRect(renderer, &cursor.body);
-  SDL_SetRenderDrawColor(renderer, 0x00,0x00,0x00,0xFF);
-}
-*/
 void Document::UPDATE(SDL_Event* event)
 {
   switch (event->type) {
   
   case SDL_TEXTINPUT:
-    this->data[0]->input(event->text.text, 1);
+    data_input(event->text.text, 1);
   break;
 
   case SDL_KEYDOWN:
@@ -211,3 +218,15 @@ void Document::UPDATE(SDL_Event* event)
 }
 
 void Document::UPDATE(const float delta_time) {}
+
+void Document::data_input(const char* buffer, const size_t length)
+{  if (this->cursor->line() < size || size == 0) {
+    this->data[size] = new Line {};
+    this->size += 1;
+  }
+  if (this->cursor->index() < this->data[this->cursor->line()]->size()) {
+    this->data[this->cursor->line()]->insert(buffer, length, this->cursor->index());
+  } else {
+    this->data[this->cursor->line()]->input(buffer, length);
+  }
+}
