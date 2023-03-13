@@ -26,6 +26,7 @@ bool Font::load_from_file(const char* file_path)
     ERROR("Failed to open the file.");
     return false;
   }
+  SDL_SetColorKey(font_surface, SDL_TRUE, 0xFF000000);
 
   this->font_sheet = SDL_CreateTextureFromSurface(renderer, font_surface);
   SDL_FreeSurface(font_surface);

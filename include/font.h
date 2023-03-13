@@ -13,7 +13,7 @@ public:
 
   int width;
   int height;
-  unsigned int scale;
+  float scale;
 
 private:
 

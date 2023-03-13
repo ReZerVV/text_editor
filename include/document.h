@@ -1,7 +1,6 @@
-#ifndef EDITOR
-#define EDITOR
+#ifndef DOCUMENT
+#define DOCUMENT
 
-#include "state.h"
 #include "component.h"
 #include "SDL_image.h"
 
@@ -70,19 +69,12 @@ private:
   
   void cursor_move_left(size_t);
   void cursor_move_right(size_t);
+  void cursor_move_up(const size_t);
+  void cursor_move_down(const size_t);
   
   void new_line();
   void input(const char, const size_t);
   void remove(const size_t);
 };
 
-class Editor : public State
-{
-public:
-  Editor(SDL_Renderer*);
-  ~Editor();
-};
-
-
-
-#endif // EDITOR
+#endif // DOCUMENT
