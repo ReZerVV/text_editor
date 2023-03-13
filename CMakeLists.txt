@@ -9,6 +9,8 @@ file(GLOB SOURCES "source/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
+message("SOURCES: ${SOURCES}")
+
 # ---------------- ADD LIBRARIES ---------------- #
 include(FindPkgConfig)
 pkg_check_modules(SDL REQUIRED sdl2>=2.0.1)
