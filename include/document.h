@@ -20,11 +20,14 @@ public:
 
 public:
 
+// ----- GET ----- //
   size_t size() const;
   size_t capacity() const;
-
+// ----- ACTIONS ----- //
   void insert(const char *, const size_t, const size_t);
   void input(const char *, const size_t);
+  void remove(const size_t, const size_t);
+  bool search(const char *, const size_t, size_t &) const;
 
 private:
 
@@ -58,6 +61,9 @@ public:
 
   size_t index() const;
   size_t line() const;
+
+  void index(const size_t);
+  void line(const size_t);
 
   SDL_Rect *body();
 
@@ -93,8 +99,10 @@ private:
 // ----- MEMORY ----- //
   void memory_reallocation();
   void memory_delete();
-// ----- EVENT ----- //
-  void data_input(const char *, const size_t);
+// ----- ACTIONS ----- //
+  void input(const char *, const size_t);
+  void remove(const size_t, const size_t);
+  void search(const char*, const size_t);
 
 private:
 
