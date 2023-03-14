@@ -1,9 +1,11 @@
 #ifndef DOCUMENT
 #define DOCUMENT
 
-#include "component.h"
 #include <SDL_image.h>
+#include "component.h"
 #include "font.h"
+#include "render.h"
+
 
 // ========================= LINE ========================= //
 
@@ -23,18 +25,19 @@ public:
 // ----- GET ----- //
   size_t size() const;
   size_t capacity() const;
+  char at(const size_t) const;
 // ----- ACTIONS ----- //
   void insert(const char *, const size_t, const size_t);
   void input(const char *, const size_t);
   void remove(const size_t, const size_t);
   bool search(const char *, const size_t, size_t &) const;
+// ----- DEBUG ----- //
+  void debug();
 
 private:
 
 // ----- MEMORY ----- //
   void memory_reallocation();
-// ----- DEBUG ----- //
-  void debug();
 
 private:
 
@@ -43,6 +46,7 @@ private:
   char *_buffer;
 
 };
+
 
 // ========================= CURSOR ========================= //
 
@@ -59,19 +63,54 @@ public:
 
 public:
 
+// ----- GET ----- //
   size_t index() const;
   size_t line() const;
-
+  SDL_Rect *body();
+// ----- SET ----- //
   void index(const size_t);
   void line(const size_t);
-
-  SDL_Rect *body();
+  void body(SDL_Rect);
+// ----- ACTIONS ----- //
+  void up(const size_t);
+  void down(const size_t);
+  void right(const size_t);
+  void left(const size_t);
 
 private:
 
   SDL_Rect _body;
   size_t _index;
   size_t _line;
+
+};
+
+
+// ========================= RENDER ========================= //
+
+class Renderer
+{
+public:
+  
+  Renderer(SDL_Renderer *);
+  Renderer(Renderer &&) = default;
+  Renderer(const Renderer &) = default;
+  Renderer &operator=(Renderer &&) = default;
+  Renderer &operator=(const Renderer &) = default;
+  ~Renderer();
+
+public:
+
+  void data(Line **, const size_t, Font *, const int, const int);
+  void text(const char *, const size_t, Font *, const int, const int);
+  void rect(SDL_Rect *, Uint32);
+  void rect(int, int, int, int, Uint32);
+  void frect(SDL_Rect *, Uint32); 
+  void frect(int, int, int, int, Uint32);
+
+private:
+ 
+  SDL_Renderer *_renderer;
 
 };
 
@@ -90,9 +129,9 @@ public:
 
 private:
 
-  void RENDER(SDL_Renderer *renderer) override;
-  void UPDATE(SDL_Event *event) override;
-  void UPDATE(const float delta_time) override;
+  void RENDER(SDL_Renderer *) override;
+  void UPDATE(SDL_Event *) override;
+  void UPDATE(const float) override;
 
 private:
 
@@ -103,6 +142,7 @@ private:
   void input(const char *, const size_t);
   void remove(const size_t, const size_t);
   void search(const char*, const size_t);
+  void create_line();
 
 private:
 
@@ -110,8 +150,11 @@ private:
   Font *font;
 
 // ----- CURSOR ----- //
-  Cursor* cursor;
+  Cursor *cursor;
 
+// ----- RENDER ----- //
+  Renderer *render;
+  
 // ----- DATA ----- //
   size_t capacity;
   size_t size;

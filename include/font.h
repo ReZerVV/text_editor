@@ -14,6 +14,7 @@ public:
   int width;
   int height;
   float scale;
+  Uint32 color;
 
 private:
 
@@ -50,7 +51,7 @@ public:
    *
    */
   SDL_Rect* get(const char) const;
-  
+
 };
 
 #endif // FONT
