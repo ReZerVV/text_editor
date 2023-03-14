@@ -5,6 +5,7 @@
 #include "component.h"
 #include "font.h"
 #include "render.h"
+#include <string>
 
 
 // ========================= LINE ========================= //
@@ -27,9 +28,9 @@ public:
   size_t capacity() const;
   char at(const size_t) const;
 // ----- ACTIONS ----- //
-  void insert(const char *, const size_t, const size_t);
-  void input(const char *, const size_t);
-  void remove(const size_t, const size_t);
+  bool insert(const char *, const size_t, const size_t);
+  bool input(const char *, const size_t);
+  bool remove(const size_t, const size_t);
   bool search(const char *, const size_t, size_t &) const;
 // ----- DEBUG ----- //
   void debug();
@@ -120,7 +121,7 @@ class Document : public Component
 {
 public:
 
-  Document(SDL_Renderer *);
+  Document(SDL_Window *, SDL_Renderer *);
   Document(Document &&) = default;
   Document(const Document &) = default;
   Document &operator=(Document &&) = default;
@@ -143,6 +144,10 @@ private:
   void remove(const size_t, const size_t);
   void search(const char*, const size_t);
   void create_line();
+  void up(const size_t);
+  void down(const size_t);
+  void left(const size_t);
+  void right(const size_t);
 
 private:
 
@@ -159,6 +164,10 @@ private:
   size_t capacity;
   size_t size;
   Line **data;
+
+// ----- DEBUG ----- //
+  SDL_Window *window;
+  std::string info;
 
 };
 

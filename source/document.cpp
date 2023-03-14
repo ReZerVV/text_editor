@@ -11,17 +11,12 @@ Line::Line()
   _size(0),
   _buffer(new char[_capacity])
 {
-// ----- DEBUG ----- //
-  printf("[DEBUG]: Line::~Line()\n");
-// ----- DEBUG ----- //
+
 }
 
 Line::~Line()
 {
   delete this->_buffer;
-// ----- DEBUG ----- //
-  printf("[DEBUG]: Line::~Line()\n");
-// ----- DEBUG ----- //
 }
 
 void Line::memory_reallocation()
@@ -35,10 +30,6 @@ void Line::memory_reallocation()
       );
   delete this->_buffer;
   this->_buffer = new_buffer;
-
-// ----- DEBUG ----- //
-  printf("[INFO]: Line::memory_reallocation() | size[%d] capacity[%d].\n", this->_size, this->_capacity);
-// ----- DEBUG ----- //
 }
 
 void Line::debug()
@@ -72,7 +63,7 @@ char Line::at(const size_t index) const
 }
 
 
-void Line::insert(const char *buffer, const size_t length, const size_t index)
+bool Line::insert(const char *buffer, const size_t length, const size_t index)
 {
   if (_size + length < _capacity) {
     memmove(
@@ -86,17 +77,21 @@ void Line::insert(const char *buffer, const size_t length, const size_t index)
       length
         );
     this->_size += length;
+
+// ----- DEBUG ----- //
+    debug();
+    return true;
   } else {
     memory_reallocation();
-    insert(buffer, length, index);
+    return insert(buffer, length, index);
   }
 
 // ----- DEBUG ----- //
   debug();
-// ----- DEBUG ----- //
+  return false;
 }
 
-void Line::input(const char *buffer, const size_t length)
+bool Line::input(const char *buffer, const size_t length)
 {
   if (_size + length < _capacity) {
     memcpy(
@@ -105,17 +100,20 @@ void Line::input(const char *buffer, const size_t length)
       length
           );
     this->_size += length;
+// ----- DEBUG ----- //
+    debug();
+    return true;
   } else {
     memory_reallocation();
-    input(buffer, length);
+    return input(buffer, length);
   }
 
 // ----- DEBUG ----- //
   debug();
-// ----- DEBUG ----- //
+  return false;
 }
 
-void Line::remove(const size_t index, const size_t length)
+bool Line::remove(const size_t index, const size_t length)
 {
   if (this->_size != 0) {
     if (index < this->_size) {
@@ -125,12 +123,15 @@ void Line::remove(const size_t index, const size_t length)
         this->_size - index
         );
     }
-    this->_size -= length;
+    this->_size -= length; 
+// ----- DEBUG ----- //
+    debug();
+    return true;
   }
-
+  
 // ----- DEBUG ----- //
   debug();
-// ----- DEBUG ----- //
+  return false;
 }
 
 bool Line::search(const char* sub_buffer, const size_t length, size_t &result) const
@@ -194,13 +195,11 @@ void Cursor::body(SDL_Rect rect)
 
 void Cursor::up(const size_t step)
 {
-  this->_line += step;
-}
+  this->_line += step;}
 
 void Cursor::down(const size_t step)
 {
-  this->_line -= step;
-}
+  this->_line -= step;}
 
 void Cursor::right(const size_t step)
 {
@@ -373,12 +372,10 @@ Document::Document(SDL_Renderer *renderer) : Component(),
   this->font->color = 0xFFFFFFFF;
 // ----- DATA ----- //
   create_line();
-  memory_reallocation();
 }
 
 Document::~Document()
 {
-  printf("[INFO]: Document::~Document().\n");
   delete this->font;
   delete this->cursor;
   delete this->render;
@@ -401,9 +398,7 @@ void Document::memory_reallocation()
 void Document::memory_delete()
 {
   for (size_t index = 0; index < capacity; ++index) {
-    if (this->data[index] != nullptr) {
-      delete this->data[index];
-    }
+    delete this->data[index];
   }
   delete this->data;
 }
@@ -416,7 +411,7 @@ void Document::RENDER(SDL_Renderer* renderer)
   this->render->data(this->data, this->size, this->font, 100, 100);
 // ----- LINE ----- //
   for (size_t line = 0; line < this->size; ++line) {
-    this->render->text( "+", 1, this->font, 60, 100 + (line * this->font->width * this->font->scale));
+    this->render->text( "*", 1, this->font, 60, 100 + (line * this->font->width * this->font->scale));
   }
 // ----- CURSOR ----- //
   this->render->rect(
@@ -426,6 +421,10 @@ void Document::RENDER(SDL_Renderer* renderer)
     this->font->height * this->font->scale,
     0xFFFF0000
     );
+// ----- DEBUG ----- //
+  this->font->scale = 1.5;
+  this->render->text(this->info.c_str(), this->info.size(), this->font, 200, 10);
+  this->font->scale = 3;
 }
 
 void Document::UPDATE(SDL_Event* event)
@@ -437,38 +436,28 @@ void Document::UPDATE(SDL_Event* event)
   break;
 
   case SDL_KEYDOWN:
+      printf("[INFO]:Data size[%d]\n", this->size); 
+      printf("[INFO]:Cursor line[%d] index[%d]\n", this->cursor->line(), this->cursor->index()); 
     switch (event->key.keysym.sym) {
 // ----- MOVE CURSOR ----- //
     case SDLK_UP:
-      if (this->cursor->line() < size) {
-        this->cursor->up(1);
-      }
+      up(1);
     break;
 
     case SDLK_DOWN:
-      if (this->cursor->line() != 0) {
-        this->cursor->down(1);
-      }
+      down(1);
     break;
 
     case SDLK_LEFT:
-      if (this->data[this->cursor->line()]->size() != 0) {
-        this->cursor->left(1);
-      } else if (this->cursor->line() != 0) {
-        this->cursor->down(1);
-      }
+      left(1);
     break;
 
     case SDLK_RIGHT:
-      if (this->cursor->index() < this->data[this->cursor->line()]->size()) {
-        this->cursor->right(1);
-      } else if (this->cursor->line() < size) {
-        this->cursor->down(1);
-      }
+      right(1);
     break;
 // ----- ACTIONS ----- //
     case SDLK_BACKSPACE:
-      remove(this->data[this->cursor->line()]->size(), 1);
+      remove(this->cursor->index(), 1);
     break;
 
     case SDLK_RETURN:
@@ -482,24 +471,47 @@ void Document::UPDATE(SDL_Event* event)
   }
 }
 
-void Document::UPDATE(const float delta_time) {}
+void Document::UPDATE(const float delta_time)
+{
+  this->info = "[INFO]\n(Data)\nsize - ";
+  this->info += std::to_string(this->size);
+  this->info += " \ncapacity - ";
+  this->info += std::to_string(this->capacity);
+  this->info += "\n(Cursor)\n";
+  this->info += "line - ";
+  this->info += std::to_string(this->cursor->line());
+  this->info += "\nindex - ";
+  this->info += std::to_string(this->cursor->index());
+}
 
 void Document::input(const char* buffer, const size_t length)
 {
   if (this->cursor->index() < this->data[this->cursor->line()]->size()) {
-    this->data[this->cursor->line()]->insert(buffer, length, this->cursor->index());
+    if (this->data[this->cursor->line()]->insert(buffer, length, this->cursor->index())) {
+      this->cursor->index(this->cursor->index() + 1);
+    }
   } else {
-    this->data[this->cursor->line()]->input(buffer, length);
+    if (this->data[this->cursor->line()]->input(buffer, length)) {
+      this->cursor->index(this->cursor->index() + 1);
+    }
   }
 }
 
 void Document::remove(const size_t index, const size_t length)
 {
-  if (this->cursor->line() == 0) {
-    this->data[this->cursor->line()]->remove(index, length);
-  } else if (this->data[this->cursor->line()]->size() != 0) {
-    this->cursor->line(this->cursor->line() - 1);
-    remove(index, length);
+  if (this->data[this->cursor->line()]->remove(index, length)) {
+    this->cursor->index(this->cursor->index() - 1);
+  } else if (this->cursor->line() != 0) {
+    if (this->data[this->cursor->line()]->size() == 0) {
+      delete this->data[this->cursor->line()];
+      this->size -= 1;
+      this->cursor->line(this->cursor->line() - 1);
+      this->cursor->index(this->data[this->cursor->line()]->size());
+    } else {
+      this->cursor->line(this->cursor->line() - 1);
+      this->cursor->index(this->data[this->cursor->line()]->size());
+      remove(index, length);
+    }
   }
 }
 
@@ -515,10 +527,53 @@ void Document::search(const char* needle, const size_t length)
 
 void Document::create_line()
 {
-  if (size < capacity) {
+  if (this->size < this->capacity) {
     this->data[size] = new Line {};
     this->size += 1;
+    this->cursor->line(this->size - 1);
+    this->cursor->index(0);
   } else {
     memory_reallocation();
+    create_line();
+  }
+}
+
+void Document::up(const size_t step)
+{
+  if (this->cursor->line() - step > 0) {
+    this->cursor->down(step);
+    if (this->cursor->index() > this->data[this->cursor->line()]->size()) {
+      this->cursor->index(this->data[this->cursor->line()]->size());
+    }
+  }
+}
+
+void Document::down(const size_t step)
+{
+  if (this->cursor->line() + step < this->size) {
+    this->cursor->up(step);
+    if (this->cursor->index() > this->data[this->cursor->line()]->size()) {
+      this->cursor->index(this->data[this->cursor->line()]->size());
+    }
+  }
+}
+
+void Document::left(const size_t step)
+{
+  if (this->cursor->index() != 0) {
+    this->cursor->left(1);
+  } else if (this->cursor->line() != 0) {
+    this->cursor->down(1);
+    this->cursor->index(this->data[this->cursor->line()]->size());
+  }
+}
+
+void Document::right(const size_t step)
+{
+  if (this->cursor->index() + step < this->data[this->cursor->line()]->size()) {
+    this->cursor->right(step);
+  } else if (this->cursor->line() + step < this->size) {
+    this->cursor->up(step);
+    this->cursor->index(0);
   }
 }
