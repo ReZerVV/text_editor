@@ -232,50 +232,25 @@ void Renderer::data(Line **data, const size_t size, Font *font, const int start_
       SDL_Rect dest = {
         .x = x,
         .y = y,
-        .w = font->width * font->scale,
-        .h = font->height * font->scale
+        .w = font->width(),
+        .h = font->height()
       };
-
-      SDL_SetTextureColorMod(
-        font->font_sheet,
-        (font->color >> (8 * 0)) & 0xff,
-        (font->color >> (8 * 1)) & 0xff,
-        (font->color >> (8 * 2)) & 0xff
-        );
-
-      SDL_SetTextureAlphaMod(
-        font->font_sheet,
-        (font->color >> (8 * 3)) & 0xff
-        );
-
       SDL_RenderCopy(this->_renderer, font->font_sheet, font->get(data[line]->at(index)), &dest);
 
-      x += font->width * font->scale;
+      x += font->width();
     }
-    y += font->height * font->scale;
+    y += font->height();
     x = start_x;
   }
 }
 
 void Renderer::text(const char *buffer, const size_t length, Font *font, const int start_x, const int start_y)
 {
-  SDL_SetTextureColorMod(
-  font->font_sheet,
-    (font->color >> (8 * 0)) & 0xff,
-    (font->color >> (8 * 1)) & 0xff,
-    (font->color >> (8 * 2)) & 0xff
-    );
-
-  SDL_SetTextureAlphaMod(
-    font->font_sheet,
-    (font->color >> (8 * 3)) & 0xff
-    );
-
   int x = start_x;
   int y = start_y;
   for (size_t index = 0; index < length; ++index) {
     if (buffer[index] == '\n') {
-      y += font->height * font->scale;
+      y += font->height();
       x = start_x;
       continue;
     }
@@ -283,13 +258,13 @@ void Renderer::text(const char *buffer, const size_t length, Font *font, const i
     SDL_Rect dest = {
       .x = x,
       .y = y,
-      .w = font->width * font->scale,
-      .h = font->height * font->scale,
+      .w = font->width(),
+      .h = font->height(),
     };
 
     SDL_RenderCopy(this->_renderer, font->font_sheet, font->get(buffer[index]), &dest);
 
-    x += font->width * font->scale;
+    x += font->width();
   }
 }
 
@@ -313,10 +288,10 @@ void Renderer::rect(int x, int y, int w, int h, Uint32 color)
     .h = h,
   };
   SDL_SetRenderDrawColor(this->_renderer,
-    (color >> (8 * 0)) & 0xff,
-    (color >> (8 * 1)) & 0xff,
+    (color >> (8 * 3)) & 0xff,
     (color >> (8 * 2)) & 0xff,
-    (color >> (8 * 3)) & 0xff
+    (color >> (8 * 1)) & 0xff,
+    (color >> (8 * 0)) & 0xff
     );
   SDL_RenderDrawRect(this->_renderer, &rect);
 }
@@ -324,10 +299,10 @@ void Renderer::rect(int x, int y, int w, int h, Uint32 color)
 void Renderer::frect(SDL_Rect *rect, Uint32 color)
 {
   SDL_SetRenderDrawColor(this->_renderer,
-    (color >> (8 * 0)) & 0xff,
-    (color >> (8 * 1)) & 0xff,
+    (color >> (8 * 3)) & 0xff,
     (color >> (8 * 2)) & 0xff,
-    (color >> (8 * 3)) & 0xff
+    (color >> (8 * 1)) & 0xff,
+    (color >> (8 * 0)) & 0xff
     );
   SDL_RenderFillRect(this->_renderer, rect);
 }
@@ -369,7 +344,7 @@ Document::Document(SDL_Renderer *renderer) : Component(),
 // ----- FONT ----- //
   this->font->load_from_file("../asset/charmap.png");
   this->font->scale = 3;
-  this->font->color = 0xFFFFFFFF;
+  this->font->color(0xFFFFFFFF);
 // ----- DATA ----- //
   create_line();
 }
@@ -384,6 +359,8 @@ Document::~Document()
 
 void Document::memory_reallocation()
 {
+  this->info_status = "realloc.";
+
   this->capacity *= 2;
   Line **new_data = new Line*[capacity];
   for (size_t index = 0; index < capacity; ++index) {
@@ -409,36 +386,80 @@ void Document::RENDER(SDL_Renderer* renderer)
   this->render->text("Text\n  Editor", 13, this->font, 10,10);
 // ----- DATA ----- //
   this->render->data(this->data, this->size, this->font, 100, 100);
-// ----- LINE ----- //
+// ----- NUM LINE ----- //
   for (size_t line = 0; line < this->size; ++line) {
-    this->render->text( "*", 1, this->font, 60, 100 + (line * this->font->width * this->font->scale));
+    this->render->text( "*", 1, this->font, 60, 100 + (line * this->font->width() + 4));
   }
 // ----- CURSOR ----- //
   this->render->rect(
-    this->cursor->index() * this->font->width * this->font->scale + 100,
-    this->cursor->line() * this->font->height * this->font->scale + 100,
-    this->font->width * this->font->scale,
-    this->font->height * this->font->scale,
+    this->cursor->index() * this->font->width() + 100,
+    this->cursor->line() * this->font->height() + 100,
+    this->font->width(),
+    this->font->height(),
     0xFFFF0000
     );
-// ----- DEBUG ----- //
-  this->font->scale = 1.5;
-  this->render->text(this->info.c_str(), this->info.size(), this->font, 200, 10);
+
+  render_info(200, 10);
+}
+
+void Document::render_info(const int start_x, const int start_y)
+{
+  this->font->scale = 1;
+
+  this->font->color(0xfb8500ff);
+  this->render->text(
+    this->info_title.c_str(),
+    this->info_title.size(),
+    this->font,
+    start_x,
+    start_y
+    );
+ 
+  this->font->color(0x8ecae6ff);
+  this->render->text(
+    this->info_status.c_str(),
+    this->info_status.size(),
+    this->font,
+    start_x + 50,
+    start_y
+    );
+
+  this->font->color(0xffb703ff);
+  this->render->text(
+    this->info_data.c_str(),
+    this->info_data.size(),
+    this->font,
+    start_x + 10,
+    start_y + 20
+    );
+
+  this->render->text(
+    this->info_cursor.c_str(),
+    this->info_cursor.size(),
+    this->font,
+    start_x + 10,
+    start_y + 40
+    );
+
+  this->render->rect(start_x, start_y + 10, 250, 50, 0x023047ff);
   this->font->scale = 3;
+  this->font->color(0xffffffff); 
 }
 
 void Document::UPDATE(SDL_Event* event)
 {
+  this->info_status.clear();
+
   switch (event->type) {
   
   case SDL_TEXTINPUT:
+    this->info_status = "text input.";
+    
     input(event->text.text, 1);
   break;
 
   case SDL_KEYDOWN:
-      printf("[INFO]:Data size[%d]\n", this->size); 
-      printf("[INFO]:Cursor line[%d] index[%d]\n", this->cursor->line(), this->cursor->index()); 
-    switch (event->key.keysym.sym) {
+  switch (event->key.keysym.sym) {
 // ----- MOVE CURSOR ----- //
     case SDLK_UP:
       up(1);
@@ -473,19 +494,22 @@ void Document::UPDATE(SDL_Event* event)
 
 void Document::UPDATE(const float delta_time)
 {
-  this->info = "[INFO]\n(Data)\nsize - ";
-  this->info += std::to_string(this->size);
-  this->info += " \ncapacity - ";
-  this->info += std::to_string(this->capacity);
-  this->info += "\n(Cursor)\n";
-  this->info += "line - ";
-  this->info += std::to_string(this->cursor->line());
-  this->info += "\nindex - ";
-  this->info += std::to_string(this->cursor->index());
+  this->info_title = "[INFO]";
+  if (this->info_status.size() == 0) {
+    this->info_status = "none.";
+  }
+  this->info_data = "DATA size -> " + std::to_string(this->size) +
+    " capacity -> " + std::to_string(this->capacity) + '\n' +
+    "  LINE size -> " + std::to_string(this->data[this->cursor->line()]->size()) +
+    " capacity -> " + std::to_string(this->data[this->cursor->line()]->capacity());
+  this->info_cursor = "CURSOR line -> " + std::to_string(this->cursor->line()) +
+    " index -> " + std::to_string(this->cursor->index());
 }
 
 void Document::input(const char* buffer, const size_t length)
 {
+  this->info_status = "input.";
+
   if (this->cursor->index() < this->data[this->cursor->line()]->size()) {
     if (this->data[this->cursor->line()]->insert(buffer, length, this->cursor->index())) {
       this->cursor->index(this->cursor->index() + 1);
@@ -499,6 +523,8 @@ void Document::input(const char* buffer, const size_t length)
 
 void Document::remove(const size_t index, const size_t length)
 {
+  this->info_status = "remove.";
+
   if (this->data[this->cursor->line()]->remove(index, length)) {
     this->cursor->index(this->cursor->index() - 1);
   } else if (this->cursor->line() != 0) {
@@ -517,6 +543,8 @@ void Document::remove(const size_t index, const size_t length)
 
 void Document::search(const char* needle, const size_t length)
 {
+  this->info_status = "search.";
+ 
   for (size_t line = 0; line < size; ++line) {
     size_t index = 0;
     if (this->data[this->cursor->line()]->search(needle, length, index)) {
@@ -527,6 +555,8 @@ void Document::search(const char* needle, const size_t length)
 
 void Document::create_line()
 {
+  this->info_status = "create line.";
+
   if (this->size < this->capacity) {
     this->data[size] = new Line {};
     this->size += 1;
@@ -540,7 +570,9 @@ void Document::create_line()
 
 void Document::up(const size_t step)
 {
-  if (this->cursor->line() - step > 0) {
+  this->info_status = "move up.";
+
+  if (this->cursor->line() - step >= 0) {
     this->cursor->down(step);
     if (this->cursor->index() > this->data[this->cursor->line()]->size()) {
       this->cursor->index(this->data[this->cursor->line()]->size());
@@ -550,6 +582,8 @@ void Document::up(const size_t step)
 
 void Document::down(const size_t step)
 {
+  this->info_status = "move down.";
+
   if (this->cursor->line() + step < this->size) {
     this->cursor->up(step);
     if (this->cursor->index() > this->data[this->cursor->line()]->size()) {
@@ -560,6 +594,8 @@ void Document::down(const size_t step)
 
 void Document::left(const size_t step)
 {
+  this->info_status = "move left.";
+
   if (this->cursor->index() != 0) {
     this->cursor->left(1);
   } else if (this->cursor->line() != 0) {
@@ -570,6 +606,8 @@ void Document::left(const size_t step)
 
 void Document::right(const size_t step)
 {
+  this->info_status = "move right.";
+
   if (this->cursor->index() + step < this->data[this->cursor->line()]->size()) {
     this->cursor->right(step);
   } else if (this->cursor->line() + step < this->size) {

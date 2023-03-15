@@ -18,7 +18,7 @@ public:
       exit(1);
     }
 
-    Create(new Editor(window, renderer));
+    Create(new Editor(renderer));
   }
   ~TextEditor() 
   {

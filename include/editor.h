@@ -6,7 +6,7 @@
 class Editor : public State
 {
 public:
-  Editor(SDL_Window*, SDL_Renderer*);
+  Editor(SDL_Renderer*);
   ~Editor();
 };
 

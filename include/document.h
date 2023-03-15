@@ -121,7 +121,7 @@ class Document : public Component
 {
 public:
 
-  Document(SDL_Window *, SDL_Renderer *);
+  Document(SDL_Renderer *);
   Document(Document &&) = default;
   Document(const Document &) = default;
   Document &operator=(Document &&) = default;
@@ -149,6 +149,9 @@ private:
   void left(const size_t);
   void right(const size_t);
 
+// ----- DEBUG ----- //
+  void render_info(const int, const int);
+
 private:
 
 // ----- FONT ----- //
@@ -166,8 +169,10 @@ private:
   Line **data;
 
 // ----- DEBUG ----- //
-  SDL_Window *window;
-  std::string info;
+  std::string info_title;
+  std::string info_cursor;
+  std::string info_data;
+  std::string info_status;
 
 };
 

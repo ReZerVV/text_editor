@@ -36,8 +36,8 @@ bool Font::load_from_file(const char* file_path)
   }
 
   SDL_QueryTexture(this->font_sheet, NULL, NULL, &font_sheet_width, &font_sheet_height);
-  this->width = font_sheet_width / font_sheet_cols;
-  this->height = font_sheet_height / font_sheet_rows; 
+  this->_width = font_sheet_width / font_sheet_cols;
+  this->_height = font_sheet_height / font_sheet_rows; 
 
   for (size_t ascii = ASCII_LOW; ascii < ASCII_HIGH; ++ascii) {
     const size_t index = ascii - ASCII_LOW;
@@ -45,10 +45,10 @@ bool Font::load_from_file(const char* file_path)
     const size_t texture_y = index / font_sheet_cols;
 
     this->atlas[index] = {
-      .x = texture_x * width,
-      .y = texture_y * height,
-      .w = width,
-      .h = height
+      .x = texture_x * this->_width,
+      .y = texture_y * this->_height,
+      .w = this->_width,
+      .h = this->_height
     };
   }
 
@@ -62,3 +62,31 @@ SDL_Rect* Font::get(const char character) const
     return &this->atlas[index];
   return nullptr;
 }
+
+size_t Font::width() const
+{
+  return this->_width * this->scale;
+}
+
+size_t Font::height() const
+{
+  return this->_height * this->scale;
+}
+
+void Font::color(Uint32 color)
+{
+  this->_color = color;
+  SDL_SetTextureColorMod(
+  this->font_sheet,
+    (color >> (8 * 3)) & 0xff,
+    (color >> (8 * 2)) & 0xff,
+    (color >> (8 * 1)) & 0xff
+    );
+
+  SDL_SetTextureAlphaMod(
+    this->font_sheet,
+    (color >> (8 * 0)) & 0xff
+    );
+}
+
+
